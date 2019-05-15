@@ -32,10 +32,13 @@ class Bank:
 # 船类
 class Boat:
     def __init__(self, bank1: Bank, bank2: Bank):
+        if bank1.name == bank2.name:
+            raise ValueError('岸名相同')
         self.capacity = 2
         self.current_person = 0
         self.thisbank = bank1
         self.thatbank = bank2
+        self.destination_name = bank2.name
 
     def change_like(self, other):
         self.current_person = other.current_person
@@ -64,9 +67,9 @@ class Boat:
             False_count += 1
         if self.thisbank.True_count - True_count >= 0 and self.thisbank.False_count - False_count >= 0:
             # 检查运输中途是否有吃人情况
-            if 0<self.thisbank.True_count - True_count < self.thisbank.False_count - False_count:
+            if 0 < self.thisbank.True_count - True_count < self.thisbank.False_count - False_count:
                 return False
-            if 0<self.thatbank.True_count < self.thatbank.False_count:
+            if 0 < self.thatbank.True_count < self.thatbank.False_count:
                 return False
             # 从当前岸减去相应人到对岸
             self.thisbank.True_count -= True_count
@@ -74,9 +77,9 @@ class Boat:
             self.thatbank.True_count += True_count
             self.thatbank.False_count += False_count
             # 检查运输完毕是否有吃人情况发生
-            if 0<self.thatbank.True_count < self.thatbank.False_count:
+            if 0 < self.thatbank.True_count < self.thatbank.False_count:
                 return False
-            if 0<self.thisbank.True_count < self.thisbank.False_count:
+            if 0 < self.thisbank.True_count < self.thisbank.False_count:
                 return False
         else:
             return False
@@ -85,16 +88,21 @@ class Boat:
         return True
 
 
-def pass_person(missionary: int, cannibal: int, bank_to_leave: Bank, bank_to_reach: Bank, boat: Boat,
+def pass_person(boat: Boat,
                 memo: list = []):  # memo用于记录两岸人和船的状态，三元素分别是前岸（食人族数、传教士数）、后岸（食人族数、传教士数）、船（位置）
     # 检查初始人数
+    missionary = boat.thisbank.True_count + boat.thatbank.True_count
+    cannibal = boat.thisbank.False_count + boat.thatbank.False_count
     if missionary < cannibal:
         return ''
 
+    # 确定前后岸
+    bank_to_leave = boat.thisbank if boat.thatbank.name==boat.destination_name else boat.thatbank
+    bank_to_reach = boat.thatbank if boat.thatbank.name==boat.destination_name else boat.thisbank
     # 状态备份
     current_bank_to_leave = copy(bank_to_leave)
     curent_bank_to_reach = copy(bank_to_reach)
-    current_boat = copy(boat)
+    current_boat = copy(boat)  # boat里的Bank类实例用的不是值，而是引用，用于对Bank实例的修改
     # 成功情况是全部运输到对岸
     # 最后的运输有这么几种情况
     # 1、运输了两个食人族
@@ -141,7 +149,7 @@ def pass_person(missionary: int, cannibal: int, bank_to_leave: Bank, bank_to_rea
     # 随机选择
     # 1、运输了一个传教士
     if boat.transform(Person(True)) and pass_history():
-        next_transform = pass_person(missionary, cannibal, bank_to_leave, bank_to_reach, boat, memo)
+        next_transform = pass_person(boat)
         if next_transform != '':
             return '运输一个传教士\n' + next_transform
     # 恢复
@@ -151,7 +159,7 @@ def pass_person(missionary: int, cannibal: int, bank_to_leave: Bank, bank_to_rea
 
     # 2、运输了一个食人族
     if boat.transform(Person(False)) and pass_history():
-        next_transform = pass_person(missionary, cannibal, bank_to_leave, bank_to_reach, boat, memo)
+        next_transform = pass_person(boat)
         if next_transform != '':
             return '运输一个食人族\n' + next_transform
     # 恢复
@@ -161,7 +169,8 @@ def pass_person(missionary: int, cannibal: int, bank_to_leave: Bank, bank_to_rea
 
     # 3、运输了两个传教士
     if boat.transform(Person(True), Person(True)) and pass_history():
-        next_transform = pass_person(missionary, cannibal, bank_to_leave, bank_to_reach, boat, memo)
+        next_transform = pass_person(boat)
+
         if next_transform != '':
             return '运输两个传教士\n' + next_transform
     # 恢复
@@ -171,7 +180,8 @@ def pass_person(missionary: int, cannibal: int, bank_to_leave: Bank, bank_to_rea
 
     # 4、运输了两个食人族
     if boat.transform(Person(False), Person(False)) and pass_history():
-        next_transform = pass_person(missionary, cannibal, bank_to_leave, bank_to_reach, boat, memo)
+        next_transform = pass_person(boat)
+
         if next_transform != '':
             return '运输两个食人族\n' + next_transform
     # 恢复
@@ -181,7 +191,8 @@ def pass_person(missionary: int, cannibal: int, bank_to_leave: Bank, bank_to_rea
 
     # 5、运输一个传教士和食人族
     if boat.transform(Person(True), Person(False)) and pass_history():
-        next_transform = pass_person(missionary, cannibal, bank_to_leave, bank_to_reach, boat, memo)
+        next_transform = pass_person(boat)
+
         if next_transform != '':
             return '运输一个传教士和一个食人族\n' + next_transform
     # 恢复
@@ -193,11 +204,11 @@ def pass_person(missionary: int, cannibal: int, bank_to_leave: Bank, bank_to_rea
 
 
 if __name__ == '__main__':
-    bank0 = Bank('前岸')
-    bank1 = Bank('后岸')
-    boat = Boat(bank0, bank1)
+    boat = Boat(Bank('前岸'), Bank('后岸'))
     # print(bank1 is boat.thatbank)
     # print(bank0 is boat.thisbank)
-    bank0.True_count = 4
-    bank0.False_count = 3
-    print(pass_person(bank0.True_count + bank1.True_count, bank0.False_count + bank1.False_count, bank0, bank1, boat))
+    # 设置传教士数量
+    boat.thisbank.True_count = 4
+    # 设置食人族数量
+    boat.thisbank.False_count = 3
+    print(pass_person(boat))
