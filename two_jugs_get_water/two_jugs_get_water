@@ -54,6 +54,9 @@ def get_water(jug_A: Jug, jug_B: Jug, water_goal: int, memo: list) -> bool:  # m
         return '得到目标水量在' + str(jug_A)
     elif jug_B.currut_water == water_goal:
         return '得到目标水量在' + str(jug_B)
+    # 两个壶总共的水量是目标水量
+    elif jug_A.currut_water + jug_B.currut_water == water_goal:
+        return '得到目标水量在' + str(jug_A) + ' ' + str(jug_B) + "共同盛放"
     # # 两个水壶都空了。玩着玩着两个水壶都倒空了还玩个毛
     # elif jug_A.currut_water == jug_B.currut_water == 0:
     #     return False
@@ -126,9 +129,9 @@ def get_water(jug_A: Jug, jug_B: Jug, water_goal: int, memo: list) -> bool:  # m
 
 
 big_jug = Jug('', 7)
-small_jug = Jug('', 3)
+small_jug = Jug('', 22)
 big_jug.name = str(big_jug.capacity) + 'L壶'
 small_jug.name = str(small_jug.capacity) + 'L壶'
 # 记录曾经有过的容量组合,最大序号是big_jug.capacity。用于记录试过的容量组合，序号为big_jug容量，值为small_jug容量列表
 memory_list = [0] * (big_jug.capacity + 1)
-print(get_water(big_jug, small_jug,8, memory_list))
+print(get_water(big_jug, small_jug, 23, memory_list))
