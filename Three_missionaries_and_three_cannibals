@@ -100,8 +100,8 @@ def pass_person(boat: Boat, memo: list = []):  # memo用于记录两岸人和船
     if missionary < cannibal:
         return ''
 
-    # memo用于记录两岸人和船的状态，元素的三子元素分别是前岸、后岸、船
-    def pass_history():
+    # memo用于记录两岸人和船的状态,记录的全是失败的状态，元素的三子元素分别是前岸、后岸、船
+    def pass_history(mode: bool = True):  # mode False是只检索状态，用于不能确定是失败尝试时使用，比如base case中的情况并非失败尝试，只是不能作为base case
         # 首次记录
         nonlocal memo
         # 找到记录
@@ -110,7 +110,8 @@ def pass_person(boat: Boat, memo: list = []):  # memo用于记录两岸人和船
             return False
         else:
             # 存储记录
-            memo.append((deepcopy(bank_to_leave), deepcopy(bank_to_reach), deepcopy(boat)))
+            if mode:
+                memo.append((deepcopy(bank_to_leave), deepcopy(bank_to_reach), deepcopy(boat)))
             # 通过历史检查
             return True
 
@@ -130,32 +131,38 @@ def pass_person(boat: Boat, memo: list = []):  # memo用于记录两岸人和船
     for i in order:
         if i == 0:
             # 1、运输了两个食人族
-            if boat.transform(Person(False), Person(False)) and \
+            if boat.transform(Person(False), Person(False)) and pass_history(False) and \
                     boat.thisbank == bank_to_reach and bank_to_reach.True_count == missionary and bank_to_reach.False_count == cannibal and \
                     bank_to_leave.False_count == 0 and bank_to_leave.True_count == 0:
                 return '运输2个食人族'
         elif i == 1:
             # 2、运输一个食人族和一个传教士
-            if boat.transform(Person(False), Person(True)) and \
+            if boat.transform(Person(False), Person(True)) and pass_history(False) and \
                     boat.thisbank == bank_to_reach and bank_to_reach.True_count == missionary and bank_to_reach.False_count == cannibal and \
                     bank_to_leave.False_count == 0 and bank_to_leave.True_count == 0:
-                return '运输一个食人族和一个传教士'
+                return '运输1个食人族和1个传教士'
         else:
             # 3、运输了两个传教士
-            if boat.transform(Person(True), Person(True)) and \
+            if boat.transform(Person(True), Person(True)) and pass_history(False) and \
                     boat.thisbank == bank_to_reach and bank_to_reach.True_count == missionary and bank_to_reach.False_count == cannibal and \
                     bank_to_leave.False_count == 0 and bank_to_leave.True_count == 0:
-                return '运输两个传教士'
+                return '运输2个传教士'
 
         # 恢复
         bank_to_leave.change_like(current_bank_to_leave)
         bank_to_reach.change_like(curent_bank_to_reach)
         boat.change_like(current_boat)
 
-    #     if memo[0][0] == bank_to_leave.False_count and memo[0][1] == bank_to_leave.True_count and \
-    #             memo[1][0] == bank_to_reach.False_count and memo[1][1] ==
-
-    # 存在历史记录校对
+    # 抵消重复操作
+    def remove_same(s: str):
+        pos0 = s.find('\n')
+        pos1 = s[pos0 + 1:].find('\n')
+        s0 = s[:pos0]
+        s1 = s[pos0 + 1:][:pos1]
+        if s0 == s1:
+            return s[pos0 + 1:][pos1 + 1:]
+        else:
+            return s
 
     # 递归情况
     # 随机选择
@@ -167,32 +174,32 @@ def pass_person(boat: Boat, memo: list = []):  # memo用于记录两岸人和船
             if boat.transform(Person(True)) and pass_history():
                 next_transform = pass_person(boat)
                 if next_transform != '':
-                    return '运输一个传教士\n' + next_transform
+                    return remove_same('运输1个传教士\n' + next_transform)
         elif i == 1:
             # 2、运输了一个食人族
             if boat.transform(Person(False)) and pass_history():
                 next_transform = pass_person(boat)
                 if next_transform != '':
-                    return '运输一个食人族\n' + next_transform
+                    return remove_same('运输1个食人族\n' + next_transform)
         elif i == 2:
             # 3、运输了两个传教士
             if boat.transform(Person(True), Person(True)) and pass_history():
                 next_transform = pass_person(boat)
 
                 if next_transform != '':
-                    return '运输两个传教士\n' + next_transform
+                    return remove_same('运输2个传教士\n' + next_transform)
         elif i == 3:
             # 4、运输了两个食人族
             if boat.transform(Person(False), Person(False)) and pass_history():
                 next_transform = pass_person(boat)
                 if next_transform != '':
-                    return '运输两个食人族\n' + next_transform
+                    return remove_same('运输2个食人族\n' + next_transform)
         elif i == 4:
             # 5、运输一个传教士和食人族
             if boat.transform(Person(True), Person(False)) and pass_history():
                 next_transform = pass_person(boat)
                 if next_transform != '':
-                    return '运输一个传教士和一个食人族\n' + next_transform
+                    return remove_same('运输1个食人族和1个传教士\n' + next_transform)
         # 恢复
         bank_to_leave.change_like(current_bank_to_leave)
         bank_to_reach.change_like(curent_bank_to_reach)
@@ -202,10 +209,8 @@ def pass_person(boat: Boat, memo: list = []):  # memo用于记录两岸人和船
 
 if __name__ == '__main__':
     boat = Boat(Bank('前岸'), Bank('后岸'))
-    # print(bank1 is boat.thatbank)
-    # print(bank0 is boat.thisbank)
     # 设置传教士数量
-    boat.thisbank.True_count = 4
+    boat.thisbank.True_count = 8
     # 设置食人族数量
-    boat.thisbank.False_count = 3
+    boat.thisbank.False_count = 7
     print(pass_person(boat))
