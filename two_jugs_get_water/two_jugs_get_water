@@ -36,20 +36,24 @@ def get_water(jug_A: Jug, jug_B: Jug, water_goal: int, memo: list) -> bool:  # m
     # 还未有与当前jug_A.currut_water搭配的组合
     if not isinstance(memo[jug_A.currut_water], list):
         memo[jug_A.currut_water] = [jug_B.currut_water]
+        # 两个壶都满直接失败，不需要这样的无意义尝试
+        if jug_A.currut_water == jug_A.capacity and jug_B.currut_water == jug_B.capacity:
+            return ''
     # 还未有当前jug_A.currut_water与jug_B.currut_water搭配的组合
     elif memo[jug_A.currut_water].count(jug_B.currut_water) <= 0:
         memo[jug_A.currut_water].append(jug_B.currut_water)
+        # 两个壶都满直接失败，不需要这样的无意义尝试
+        if jug_A.currut_water == jug_A.capacity and jug_B.currut_water == jug_B.capacity:
+            return ''
     # 出现过这种尝试，既然程序还在运行说明这个尝试失败了
     else:
-        return False
+        return ''
 
     # base case 有个水壶有了目标水量
     if jug_A.currut_water == water_goal:
-        print('得到目标水量在', str(jug_A))
-        return True
+        return '得到目标水量在' + str(jug_A)
     elif jug_B.currut_water == water_goal:
-        print('得到目标水量在', str(jug_B))
-        return True
+        return '得到目标水量在' + str(jug_B)
     # # 两个水壶都空了。玩着玩着两个水壶都倒空了还玩个毛
     # elif jug_A.currut_water == jug_B.currut_water == 0:
     #     return False
@@ -66,27 +70,26 @@ def get_water(jug_A: Jug, jug_B: Jug, water_goal: int, memo: list) -> bool:  # m
                 # 1、发生水壶间倒水
                 # 可能是A向B倒水
                 jug_A.pour_to(jug_B)
-                if get_water(jug_A, jug_B, water_goal, memo):
-                    print(jug_A, '向', jug_B, '倒水')
-                    return True
+                nextoperation = get_water(jug_A, jug_B, water_goal, memo)
+                if nextoperation != '':
+                    return str(jug_A) + '向' + str(jug_B) + '倒水\n' + nextoperation
                 # 恢复
                 jug_A, jug_B = deepcopy(current_jug_A), deepcopy(current_jug_B)
             elif i == 1:
                 # 可能是B向A倒水
                 jug_B.pour_to(jug_A)
-                if get_water(jug_A, jug_B, water_goal, memo):
-                    print(jug_B, '向', jug_A, '倒水')
-                    return True
+                nextoperation = get_water(jug_A, jug_B, water_goal, memo)
+                if nextoperation != '':
+                    return str(jug_B) + '向' + str(jug_A) + '倒水\n' + nextoperation
                 # 恢复
                 jug_A, jug_B = deepcopy(current_jug_A), deepcopy(current_jug_B)
-
             elif i == 2:
 
                 # 可能是A接水
                 jug_A.receivewater()
-                if get_water(jug_A, jug_B, water_goal, memo):
-                    print(jug_A, '接满水')
-                    return True
+                nextoperation = get_water(jug_A, jug_B, water_goal, memo)
+                if nextoperation != '':
+                    return str(jug_A) + '接满水\n' + nextoperation
                 # 恢复
                 jug_A, jug_B = deepcopy(current_jug_A), deepcopy(current_jug_B)
 
@@ -94,9 +97,9 @@ def get_water(jug_A: Jug, jug_B: Jug, water_goal: int, memo: list) -> bool:  # m
 
                 # 可能是B接水
                 jug_B.receivewater()
-                if get_water(jug_A, jug_B, water_goal, memo):
-                    print(jug_B, '接满水')
-                    return True
+                nextoperation = get_water(jug_A, jug_B, water_goal, memo)
+                if nextoperation != '':
+                    return str(jug_B) + '接满水\n' + nextoperation
                 # 恢复
                 jug_A, jug_B = deepcopy(current_jug_A), deepcopy(current_jug_B)
 
@@ -104,9 +107,9 @@ def get_water(jug_A: Jug, jug_B: Jug, water_goal: int, memo: list) -> bool:  # m
 
                 # 可能是A倒空水
                 jug_A.pour_water()
-                if get_water(jug_A, jug_B, water_goal, memo):
-                    print(jug_A, '倒空水')
-                    return True
+                nextoperation = get_water(jug_A, jug_B, water_goal, memo)
+                if nextoperation != '':
+                    return str(jug_A) + '倒空水\n' + nextoperation
                 # 恢复
                 jug_A, jug_B = deepcopy(current_jug_A), deepcopy(current_jug_B)
 
@@ -114,17 +117,18 @@ def get_water(jug_A: Jug, jug_B: Jug, water_goal: int, memo: list) -> bool:  # m
 
                 # 可能是B倒空水
                 jug_B.pour_water()
-                if get_water(jug_A, jug_B, water_goal, memo):
-                    print(jug_B, '倒空水')
-                    return True
+                nextoperation = get_water(jug_A, jug_B, water_goal, memo)
+                if nextoperation != '':
+                    return str(jug_B) + '倒空水\n' + nextoperation
                 # 恢复
                 jug_A, jug_B = deepcopy(current_jug_A), deepcopy(current_jug_B)
+    return ''
 
 
-big_jug = Jug('', 4)
+big_jug = Jug('', 7)
 small_jug = Jug('', 3)
 big_jug.name = str(big_jug.capacity) + 'L壶'
 small_jug.name = str(small_jug.capacity) + 'L壶'
 # 记录曾经有过的容量组合,最大序号是big_jug.capacity。用于记录试过的容量组合，序号为big_jug容量，值为small_jug容量列表
 memory_list = [0] * (big_jug.capacity + 1)
-get_water(big_jug, small_jug, 2, memory_list)
+print(get_water(big_jug, small_jug,8, memory_list))
